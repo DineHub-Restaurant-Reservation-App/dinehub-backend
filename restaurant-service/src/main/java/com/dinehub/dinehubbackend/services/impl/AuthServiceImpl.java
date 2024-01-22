@@ -5,6 +5,7 @@ import com.dinehub.dinehubbackend.dto.*;
 import com.dinehub.dinehubbackend.entities.Restaurant;
 import com.dinehub.dinehubbackend.entities.Role;
 import com.dinehub.dinehubbackend.entities.User;
+import com.dinehub.dinehubbackend.exceptions.restaurant.DuplicateRestaurantException;
 import com.dinehub.dinehubbackend.exceptions.user.InvalidCredentialsException;
 import com.dinehub.dinehubbackend.exceptions.user.DuplicateUserException;
 import com.dinehub.dinehubbackend.services.AuthService;
@@ -13,6 +14,7 @@ import com.dinehub.dinehubbackend.services.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +41,10 @@ public class AuthServiceImpl implements AuthService {
                 throw new DuplicateUserException("Email address already existing!");
             }
 
+            if(restaurantService.isRestaurantAlreadyExisting(request.getRestaurantName())){
+                throw new DuplicateRestaurantException();
+            }
+
             User savedUser = userDao.save(user);
 
             Restaurant restaurant = Restaurant.builder()
@@ -51,6 +57,7 @@ public class AuthServiceImpl implements AuthService {
 
             String token = jwtTokenService.generateToken(user);
 
+
             String tokenExpirationTimeInMilliS = String.valueOf(jwtTokenService.extractTokenExpirationTime(token).getTime());
 
             return AuthenticationResponseDTO.builder()
@@ -62,10 +69,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthenticationResponseDTO login(LoginRequestDTO request) {
+    public AuthenticationResponseDTO login(LoginRequestDTO request) throws AuthenticationException{
 
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
-
         User user = userDao.findByEmail(request.getEmail())
                            .orElseThrow(() -> new InvalidCredentialsException("Invalid login credentials!"));
 

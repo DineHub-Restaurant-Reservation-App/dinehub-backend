@@ -18,15 +18,16 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public Restaurant createRestaurant(Restaurant restaurant) throws DuplicateRestaurantException{
 
-        if(isRestaurantAlreadyExisting(restaurant)){
+        if(isRestaurantAlreadyExisting(restaurant.getName())){
             throw new DuplicateRestaurantException();
         }
 
         return restaurantDao.save(restaurant);
     }
 
-    public boolean isRestaurantAlreadyExisting(Restaurant restaurant){
-        Restaurant savedRestaurant = restaurantDao.findByName(restaurant.getName());
+    @Override
+    public boolean isRestaurantAlreadyExisting(String name){
+        Restaurant savedRestaurant = restaurantDao.findByName(name);
 
         if(savedRestaurant!=null){
             return true;

@@ -10,6 +10,8 @@ public interface RestaurantService {
 
     public Restaurant createRestaurant(Restaurant restaurant) throws DuplicateRestaurantException;
 
+    boolean isRestaurantAlreadyExisting(String name);
+
     public Restaurant updateRestaurant(Restaurant restaurant) throws RestaurantNotFoundException;
 
     public boolean deleteRestaurant(String id);
