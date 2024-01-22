@@ -24,6 +24,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
     private final AuthenticationManager authenticationManager;
+
+
     @Override
     public AuthenticationResponseDTO register(RegisterRequestDTO request) {
 
@@ -33,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
                     .role(Role.BUSINESS)
                     .build();
 
-            if(userDao.findByEmail(request.getEmail()).get()!=null){
+            if(userDao.existsByEmail(user.getEmail())){
                 throw new DuplicateUserException("Email address already existing!");
             }
 
@@ -47,9 +49,16 @@ public class AuthServiceImpl implements AuthService {
 
             restaurantService.createRestaurant(restaurant);
 
-            String jwt = jwtTokenService.generateToken(user);
+            String token = jwtTokenService.generateToken(user);
 
-            return AuthenticationResponseDTO.builder().token(jwt).build();
+            String tokenExpirationTimeInMilliS = String.valueOf(jwtTokenService.extractTokenExpirationTime(token).getTime());
+
+            return AuthenticationResponseDTO.builder()
+                    .token(token)
+                    .email(user.getEmail())
+                    .userId(user.getId())
+                    .expiresIn(tokenExpirationTimeInMilliS)
+                    .build();
     }
 
     @Override
@@ -59,8 +68,17 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userDao.findByEmail(request.getEmail())
                            .orElseThrow(() -> new InvalidCredentialsException("Invalid login credentials!"));
-        String jwt = jwtTokenService.generateToken(user);
 
-        return AuthenticationResponseDTO.builder().token(jwt).build();
+        String token = jwtTokenService.generateToken(user);
+
+        String tokenExpirationTimeInMilliS = String.valueOf(jwtTokenService.extractTokenExpirationTime(token).getTime());
+
+        return AuthenticationResponseDTO.builder()
+                .token(token)
+                .email(user.getEmail())
+                .userId(user.getId())
+                .expiresIn(tokenExpirationTimeInMilliS)
+                .build();
     }
 }
+

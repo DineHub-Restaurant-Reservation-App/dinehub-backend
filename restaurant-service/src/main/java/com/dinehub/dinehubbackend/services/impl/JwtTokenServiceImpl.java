@@ -55,7 +55,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         return extractTokenExpirationTime(token).before(new Date());
     }
 
-    private Date extractTokenExpirationTime(String token){
+    public Date extractTokenExpirationTime(String token){
         return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody().getExpiration();
     }
 
