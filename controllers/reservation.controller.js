@@ -221,17 +221,6 @@ exports.reserveSeat = asyncHandler(async (req, res) => {
   res.json(savedReservation);
 });
 
-// function convertTimeToLocaleTimeString(time) {
-//   const [hours, minutes] = time.split(":").map(Number);
-//   const date = new Date();
-//   date.setHours(hours, minutes, 0, 0);
-//   return date.toLocaleTimeString("en-US", {
-//     hour: "2-digit",
-//     minute: "2-digit",
-//     hour12: false,
-//   });
-// }
-
 function findTable(
   matchingTables,
   reservationsForTheTime,
