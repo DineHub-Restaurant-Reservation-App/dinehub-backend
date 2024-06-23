@@ -62,7 +62,7 @@ const RestaurantSchema = new mongoose.Schema({
   bannerImageHref: { type: String, default: "" },
   logoHref: { type: String, default: "" },
   rating: { type: String, default: 0 },
-  // 0 -> Monday, 6 -> Sunday
+  // 0 -> Sunday, 6 -> Saturday
   businessHours: {
     type: [BusinessHourSchema],
     default: [

@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const { createToken } = require("../middleware/verifyToken");
 const { isRestaurantDataValid } = require("../utils/restaurantValidator");
 const Menu = require("../models/menu.model");
+const Reservations = require("../models/reservation.model");
 
 const createRestaurant = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -32,6 +33,11 @@ const createRestaurant = asyncHandler(async (req, res) => {
   const menu = await Menu.create({
     restaurant: restaurant._id,
     categories: [],
+  });
+
+  await Reservations.create({
+    restaurant: restaurant._id,
+    reservations: {},
   });
 
   const updatedRestaurant = await Restaurant.findByIdAndUpdate(
