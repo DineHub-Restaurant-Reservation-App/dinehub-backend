@@ -83,7 +83,7 @@ const loginToRestaurant = asyncHandler(async (req, res) => {
 });
 
 const updateRestaurant = asyncHandler(async (req, res) => {
-  console.log("Inside updateRestaurant controller");
+
   const { id } = req.token;
 
   const isValid = isRestaurantDataValid(req.body, res);
