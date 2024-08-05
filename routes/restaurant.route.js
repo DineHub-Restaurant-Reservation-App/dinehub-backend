@@ -1,5 +1,3 @@
-
-
 const router = require("express").Router();
 const {getRestaurants, searchRestaurantByName,getRestaurantByName, getRestaurantById} = require("../controllers/restaurant.controller");
 

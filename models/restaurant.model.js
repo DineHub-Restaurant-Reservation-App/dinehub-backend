@@ -85,6 +85,10 @@ const RestaurantSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "menu",
   },
+  reservations: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "reservations",
+  },
   isVisible: {
     type: Boolean,
     default: false,

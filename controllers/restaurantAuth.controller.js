@@ -35,7 +35,7 @@ const createRestaurant = asyncHandler(async (req, res) => {
     categories: [],
   });
 
-  await Reservations.create({
+  const reservations = await Reservations.create({
     restaurant: restaurant._id,
     reservations: {},
   });
@@ -44,6 +44,7 @@ const createRestaurant = asyncHandler(async (req, res) => {
     restaurant._id,
     {
       menu: menu._id,
+      reservations: reservations._id
     },
     {
       new: true,
@@ -75,11 +76,25 @@ const loginToRestaurant = asyncHandler(async (req, res) => {
 
   if (restaurant && (await bcrypt.compare(password, restaurant.password))) {
     const token = createToken({ id: restaurant.id });
-    res.status(200).json({ id: restaurant.id, token });
+    res.status(200).json({ restaurant, token });
   } else {
     res.status(401);
     throw new Error("Invalid email or password!");
   }
+});
+
+const getRestaurant = asyncHandler(async (req, res) => {
+
+  const { id } = req.token;
+
+  const restaurant = await Restaurant.findById(id).populate(["menu","reservations"])
+
+  if(!restaurant){
+    res.status(401);
+    throw new Error("Restaurant details not existing!");
+  }
+
+  res.status(200).json(restaurant);
 });
 
 const updateRestaurant = asyncHandler(async (req, res) => {
@@ -121,6 +136,7 @@ const deleteRestaurant = asyncHandler(async (req, res) => {
 module.exports = {
   createRestaurant,
   loginToRestaurant,
+  getRestaurant,
   updateRestaurant,
   deleteRestaurant,
 };

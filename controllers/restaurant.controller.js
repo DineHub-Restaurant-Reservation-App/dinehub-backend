@@ -30,7 +30,7 @@ exports.getRestaurantByName = asyncHandler(async (req, res) => {
 exports.getRestaurantById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const restaurant = await Restaurant.findById(id);
+  const restaurant = await Restaurant.findById(id).populate("menu");
 
   if (!restaurant) {
     throw new CustomError("RestaurantNotFound", "Restaurant not found!");
