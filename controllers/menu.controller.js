@@ -93,9 +93,9 @@ exports.deleteCategory = asyncHandler(async (req, res) => {
 
   menu.categories = filteredCategories;
 
-  await menu.save();
+  const updatedMenu = await menu.save();
 
-  res.status(200).json({ message: "Category deleted successfully!" });
+  res.status(200).json(updatedMenu);
 });
 
 exports.addCategoryMenuItem = asyncHandler(async (req, res) => {
@@ -191,13 +191,12 @@ exports.updateCategoryMenuItem = asyncHandler(async (req, res) => {
 exports.deleteCategoryMenuItem = asyncHandler(async (req, res) => {
   const { categoryId, menuId } = req.params;
   const { id } = req.token;
-
   if (!isValidObjectId(categoryId) || !isValidObjectId(menuId)) {
     res.status(400);
     throw new Error("Invalid Category id or Menu id provided!");
   }
 
-  const deletedMenuItem = await Menu.findOneAndUpdate(
+  const deletedMenu = await Menu.findOneAndUpdate(
     {
       restaurant: id,
       "categories._id": categoryId,
@@ -214,12 +213,12 @@ exports.deleteCategoryMenuItem = asyncHandler(async (req, res) => {
     }
   );
 
-  if (!deletedMenuItem) {
+  if (!deletedMenu) {
     res.status(404);
     throw new Error("Menu item to delete not existing!");
   }
 
-  res.status(200).json({ message: "Menu item deleted successfully!" });
+  res.status(200).json(deletedMenu);
 });
 
 exports.getMenuById = asyncHandler(async (req, res) => {
