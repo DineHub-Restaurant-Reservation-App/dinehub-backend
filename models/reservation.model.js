@@ -67,6 +67,14 @@ const ReservationsSchema = new mongoose.Schema({
             type: String,
             require: [true, "User name cannot be empty"],
           },
+          email: {
+            type: String,
+            require: [true, "Email cannot be empty"],
+          },
+          phoneNumber: {
+            type: String,
+            require: [true, "Phone Number cannot be empty"],
+          },
         },
       ],
     },

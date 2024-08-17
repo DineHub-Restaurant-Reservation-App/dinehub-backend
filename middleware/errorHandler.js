@@ -1,6 +1,6 @@
 const { constants: HTTP_RESPONSE } = require("../utils/constants");
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, next) => {  
   let statusCode = res.statusCode || HTTP_RESPONSE.SERVER_ERROR;
   let message = "An unkown error";
 

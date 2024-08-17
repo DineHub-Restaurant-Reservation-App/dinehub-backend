@@ -2,19 +2,22 @@ const asyncHandler = require("express-async-handler");
 const Reservation = require("../models/reservation.model");
 const CustomError = require("../utils/CustomError");
 const Restaurant = require("../models/restaurant.model");
+const { default: mongoose } = require("mongoose");
 
 exports.getAvailableSeats = asyncHandler(async (req, res) => {
-  const { restaurantId, totalNumberOfPersons, date } = req.body;
+  const { restaurantId, totalNumberOfPersons, date } = req.query;
 
   const dateToReserve = new Date(date);
 
   if (isNaN(dateToReserve.getTime())) {
+    res.status(400);
     throw new CustomError("DateParsingError", "Invalid date provided.");
   }
 
   const today = new Date();
 
   if (dateToReserve < today) {
+    res.status(400);
     throw new Error("The reservation date cannot be earlier than today.");
   }
 
@@ -23,6 +26,7 @@ exports.getAvailableSeats = asyncHandler(async (req, res) => {
   });
 
   if (!restaurantReservations) {
+    res.status(400);
     throw new CustomError(
       "RestaurantNotFound",
       "Restaurant not available to reserve!"
@@ -33,8 +37,8 @@ exports.getAvailableSeats = asyncHandler(async (req, res) => {
   const businessHoursOfReservationDay =
     restaurant.businessHours[dateToReserve.getUTCDay()];
 
- const isDateHavingReservations =
-    restaurantReservations.reservations.hasOwnProperty(dateToReserve); 
+  const isDateHavingReservations =
+    restaurantReservations.reservations.hasOwnProperty(dateToReserve);
 
   const timeSlots = getTimeSlots(restaurant, businessHoursOfReservationDay);
 
@@ -87,7 +91,6 @@ const getTimeSlots = (restaurant, businessHours) => {
   const slotInterval = restaurant.slotInterval;
 
   while (startingTime < businessHours.to) {
-
     const endingTime = getEndingTime(startingTime, slotInterval);
     slots.push(`${startingTime}-${endingTime}`);
 
@@ -113,7 +116,6 @@ const getEndingTime = (time, slotInterval) => {
 const convertTimeToLocaleTimeString = (timeStr) => {
   const [hours, minutes] = timeStr.split(":");
 
-  console.log("timeStr:", timeStr, hours, minutes);
   const time = new Date(0, 0, 0, hours, minutes);
   return time.toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -124,27 +126,38 @@ const convertTimeToLocaleTimeString = (timeStr) => {
 
 // TODO: fix time format
 exports.reserveSeat = asyncHandler(async (req, res) => {
-  const { restaurantId, totalNumberOfPersons, date, time: reservationTime, reservationName } = req.body;
+  const {
+    restaurantId,
+    totalNumberOfPersons,
+    date,
+    time: reservationTime,
+    reservationName,
+    email,
+    phoneNumber
+  } = req.body;
 
-  // Parse the reservation date
+  // Parse the reservation date and normalize to local midnight
   const reservationDate = new Date(date);
+  reservationDate.setHours(0, 0, 0, 0); // Normalize to midnight local time
 
-  // Validate the reservation date
-  if (isNaN(reservationDate.getTime())) {
-    throw new CustomError("DateParsingError", "Invalid date provided.");
-  }
-
+  // Normalize today's date to midnight local time
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  if (reservationDate <= today) {
-    throw new CustomError("InvalidDate", "The reservation date cannot be earlier than today.");
+  // Validate that the reservation date is not earlier than today
+  if (reservationDate < today) {
+    throw new CustomError(
+      "InvalidDate",
+      "The reservation date cannot be earlier than today."
+    );
   }
 
   const reservationDateKey = reservationDate.toLocaleDateString(); // Use locale date string for date key
 
   // Find the existing reservations for the restaurant
-  let restaurantReservations = await Reservation.findOne({ restaurant: restaurantId });
+  let restaurantReservations = await Reservation.findOne({
+    restaurant: restaurantId,
+  });
 
   if (!restaurantReservations) {
     // If not found, initialize a new reservation record for the restaurant
@@ -159,7 +172,8 @@ exports.reserveSeat = asyncHandler(async (req, res) => {
     restaurantReservations.reservations.set(reservationDateKey, new Map());
   }
 
-  const reservationsForTheDay = restaurantReservations.reservations.get(reservationDateKey);
+  const reservationsForTheDay =
+    restaurantReservations.reservations.get(reservationDateKey);
 
   if (!reservationsForTheDay.has(reservationTime)) {
     reservationsForTheDay.set(reservationTime, []);
@@ -175,36 +189,58 @@ exports.reserveSeat = asyncHandler(async (req, res) => {
   }
 
   // Find tables that can accommodate the required number of persons
-  const sortedTables = restaurant.seatingArrangements.sort((tableA, tableB) => tableA.capacity - tableB.capacity);
+  const sortedTables = restaurant.seatingArrangements.sort(
+    (tableA, tableB) => tableA.capacity - tableB.capacity
+  );
 
-  const matchingTablesForReservation = sortedTables.filter(table => table.capacity >= totalNumberOfPersons);
+  const matchingTablesForReservation = sortedTables.filter(
+    (table) => table.capacity >= totalNumberOfPersons
+  );
 
   if (matchingTablesForReservation.length === 0) {
-    throw new CustomError("TableNotFoundError", "No table available to accommodate the specified number of persons.");
+    throw new CustomError(
+      "TableNotFoundError",
+      "No table available to accommodate the specified number of persons."
+    );
   }
 
   // Find an available table
-  const tableToBook = findTable(matchingTablesForReservation, reservationsForTheTime, totalNumberOfPersons);
+  const tableToBook = findTable(
+    matchingTablesForReservation,
+    reservationsForTheTime,
+    totalNumberOfPersons
+  );
 
   if (!tableToBook) {
-    throw new CustomError("TablesBooked", "All tables are currently booked. Please try a different time slot or reduce the number of persons.");
+    throw new CustomError(
+      "TablesBooked",
+      "All tables are currently booked. Please try a different time slot or reduce the number of persons."
+    );
   }
 
   // Create a new reservation entry
   const newReservation = {
+    _id: new mongoose.Types.ObjectId(),
     tableNumber: tableToBook.tableNumber,
     totalPersons: totalNumberOfPersons,
-    date: reservationDate,
+    date: reservationDateKey,
     time: reservationTime,
     userName: reservationName,
+    email,
+    phoneNumber
   };
 
   // Add the new reservation to the time slot
   reservationsForTheTime.push(newReservation);
 
   // Convert Map to plain object for saving to MongoDB
-  restaurantReservations.reservations.set(reservationDateKey, reservationsForTheDay);
-  const reservationsObject = Object.fromEntries(restaurantReservations.reservations);
+  restaurantReservations.reservations.set(
+    reservationDateKey,
+    reservationsForTheDay
+  );
+  const reservationsObject = Object.fromEntries(
+    restaurantReservations.reservations
+  );
 
   // Save the updated reservation document
   const savedReservation = await Reservation.findOneAndUpdate(
@@ -214,7 +250,7 @@ exports.reserveSeat = asyncHandler(async (req, res) => {
   );
 
   // Respond with the saved reservation details
-  res.json(savedReservation);
+  res.json({ ...newReservation, restaurantId });
 });
 function findTable(
   matchingTables,
@@ -231,3 +267,52 @@ function findTable(
   }
   return null;
 }
+
+exports.getReservationById = asyncHandler(async (req, res) => {
+  const { restaurantId, reservationId, date, time } = req.query;
+
+  const reservationDate = new Date(date);
+  reservationDate.setHours(0, 0, 0, 0); // Normalize to midnight local time
+
+  if (isNaN(reservationDate.getTime())) {
+    res.status(400);
+    throw new CustomError("DateParsingError", "Invalid date provided.");
+  }
+
+  let restaurantReservations = await Reservation.findOne({
+    restaurant: restaurantId,
+  });
+
+  const reservationInGivenDayAndTime =
+    restaurantReservations.reservations
+      .get(reservationDate.toLocaleDateString())
+      .get(time) || [];
+
+  const savedReservation = reservationInGivenDayAndTime.filter(
+    (reservation) => {
+      return reservation._id.toString() === reservationId;
+    }
+  );
+
+  if (!reservationInGivenDayAndTime || !savedReservation) {
+    res.status(400);
+    throw new CustomError("NotFound", "No reservation found!");
+  }
+
+  res.json(...savedReservation);
+});
+
+exports.getReservationByRestaurantId = asyncHandler(async (req, res) => {
+  const { id } = req.token;
+
+  let restaurantReservations = await Reservation.findOne({ restaurant: id });
+  let reservations = [];
+
+  restaurantReservations.reservations.forEach((reservationsByDate) => {
+    reservationsByDate.forEach((reservationsByTime) => {
+      reservations.push(...reservationsByTime);
+    });
+  });
+
+  res.json(reservations);
+});

@@ -17,7 +17,6 @@ exports.searchRestaurantByName = asyncHandler(async (req, res) => {
 
 exports.getRestaurantByName = asyncHandler(async (req, res) => {
   const { name } = req.params;
-  console.log("Name: ", name);
   const restaurant = await Restaurant.find({ name: name});
 
   if (!restaurant) {

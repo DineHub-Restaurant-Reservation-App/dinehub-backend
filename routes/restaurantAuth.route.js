@@ -5,6 +5,7 @@ const {
   updateRestaurant,
   deleteRestaurant,
 } = require("../controllers/restaurantAuth.controller");
+
 const { verifyToken } = require("../middleware/verifyToken");
 
 const router = require("express").Router();

@@ -56,7 +56,9 @@ const createRestaurant = asyncHandler(async (req, res) => {
     throw new Error("Invalid data!");
   }
 
-  res.status(201).json(updatedRestaurant);
+  const token = createToken({ id: updatedRestaurant.id });
+
+  res.status(201).json({restaurant: updatedRestaurant, token});
 });
 
 const loginToRestaurant = asyncHandler(async (req, res) => {
@@ -98,13 +100,12 @@ const getRestaurant = asyncHandler(async (req, res) => {
 });
 
 const updateRestaurant = asyncHandler(async (req, res) => {
-
   const { id } = req.token;
 
   const isValid = isRestaurantDataValid(req.body, res);
 
   if (!isValid) {
-    restart.status(400);
+    res.status(400);
     throw new Error("All fields are mandatory!");
   }
 
