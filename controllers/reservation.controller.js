@@ -19,7 +19,6 @@ exports.getAvailableSeats = asyncHandler(async (req, res) => {
   today.setHours(0, 0, 0, 0); // Normalize to midnight local time
 
   if (dateToReserve < today) {
-    console.log("Is Prev Day: ", today);
     res.status(400);
     throw new Error("The reservation date cannot be earlier than today.");
   }
@@ -189,6 +188,7 @@ exports.reserveSeat = asyncHandler(async (req, res) => {
   const restaurant = await Restaurant.findById(restaurantId);
 
   if (!restaurant) {
+    res.status(404);
     throw new CustomError("RestaurantNotFound", "Restaurant not found.");
   }
 
@@ -202,6 +202,7 @@ exports.reserveSeat = asyncHandler(async (req, res) => {
   );
 
   if (matchingTablesForReservation.length === 0) {
+    res.status(404);
     throw new CustomError(
       "TableNotFoundError",
       "No table available to accommodate the specified number of persons."
@@ -216,6 +217,7 @@ exports.reserveSeat = asyncHandler(async (req, res) => {
   );
 
   if (!tableToBook) {
+    res.status(404);
     throw new CustomError(
       "TablesBooked",
       "All tables are currently booked. Please try a different time slot or reduce the number of persons."
