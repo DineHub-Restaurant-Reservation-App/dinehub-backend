@@ -17,6 +17,7 @@ exports.getAvailableSeats = asyncHandler(async (req, res) => {
   const today = new Date();
 
   if (dateToReserve < today) {
+    console.log("Is Prev Day: ",reservationDate, today);
     res.status(400);
     throw new Error("The reservation date cannot be earlier than today.");
   }
@@ -146,7 +147,7 @@ exports.reserveSeat = asyncHandler(async (req, res) => {
 
   // Validate that the reservation date is not earlier than today
   if (reservationDate < today) {
-    console.log("Is Prev Day: ",reservationDate, today);
+    res.status(400);
     throw new CustomError(
       "InvalidDate",
       "The reservation date cannot be earlier than today."
