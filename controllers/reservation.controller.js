@@ -8,6 +8,7 @@ exports.getAvailableSeats = asyncHandler(async (req, res) => {
   const { restaurantId, totalNumberOfPersons, date } = req.query;
 
   const dateToReserve = new Date(date);
+  dateToReserve.setHours(0, 0, 0, 0); // Normalize to midnight local time
 
   if (isNaN(dateToReserve.getTime())) {
     res.status(400);
@@ -15,6 +16,7 @@ exports.getAvailableSeats = asyncHandler(async (req, res) => {
   }
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize to midnight local time
 
   if (dateToReserve < today) {
     console.log("Is Prev Day: ", today);
