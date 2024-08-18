@@ -12,28 +12,30 @@ const errorHandler = require("./middleware/errorHandler");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
+// Connect to the database
 connectToDb();
 
+// CORS configuration
 const corsOptions = {
   credentials: true,
-  origin: ['http://localhost:4200',"https://dinehub-backend.onrender.com"] // Whitelist the domains you want to allow
+  origin: ['http://localhost:4200', 'https://dinehub-b2bf.onrender.com/*'] // List all origins that need to be allowed
 };
 
-app.use(cors(corsOptions)); // Use the cors middleware with your options
-
+// Apply CORS middleware before defining routes
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
+// Define routes
 app.use("/api/v1/restaurant/auth", restaurantAuthRoutes);
 app.use("/api/v1/menu", menuRoutes);
 app.use("/api/v1/reservation", reservationRoutes);
 app.use("/api/v1/restaurants", restaurantRoutes);
 
-// error handler
+// Error handler middleware
 app.use(errorHandler);
 
+// Start the server
 app.listen(PORT, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
+  console.log(`⚡️[server]: Server is running!`);
 });
-
