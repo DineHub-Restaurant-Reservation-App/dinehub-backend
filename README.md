@@ -16,8 +16,7 @@ DineHub Backend is a collection of microservices that power the backend function
 
 - **Express.js:** The backend is developed using the express.js, providing a robust and scalable foundation.
 - **Javascript:** The primary programming language used for developing the backend services.
-- **RESTful API:** The communication between microservices follows the principles of RESTful APIs.
-- **MySQL:** The database is powered by MySQL, ensuring efficient and reliable data storage and retrieval.
+- **MongoDB:** The database is powered by MongoDB, ensuring efficient and reliable data storage and retrieval.
 
 ## Author
 
